@@ -5,5 +5,5 @@ pub struct Branch<T>
 where T: Copy {
     pub left: Box<dyn Node<T>>,
     pub right: Box<dyn Node<T>>,
-    pub splitter: dyn Splitter
+    pub splitter: Splitter
 }

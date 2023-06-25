@@ -16,9 +16,9 @@ impl<T: Copy> Node<T> for Leaf<T> {
 impl<T: Copy> Node<T> for Branch<T> {
     fn predict(&self, x: &ArrayBase<OwnedRepr<f32>, Ix1>) -> T {
         if self.splitter.split(x) {
-            self.left.predict(x)
-        } else {
             self.right.predict(x)
+        } else {
+            self.left.predict(x)
         }
     }
 }

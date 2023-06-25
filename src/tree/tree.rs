@@ -1,7 +1,7 @@
-use ndarray::{ArrayBase, Ix1, Data};
+use ndarray::{ArrayBase, Ix1, Ix2, OwnedRepr, Axis};
 use rand::Rng;
-use crate::tree::splitter::{Splitter, NumericalSplitter};
-use crate::tree::node::Node;
+use crate::tree::splitter::Splitter;
+use crate::tree::{tree_classifier::TreeClassifier, tree_regressor::TreeRegressor};
 
 pub struct TreeSettings {
     pub max_features: usize,
@@ -17,28 +17,19 @@ impl TreeSettings {
     }
 }
 
-pub trait Tree {
-    fn pick_random_split<T>(samples: ArrayBase<T, Ix1>, attribute_index: usize) -> Box<dyn Splitter>
-    where T: Data<Elem = f32>;
-}
-
-pub struct TreeClassifier {
-    root: dyn Node<bool>
+pub enum Tree {
+    // A tree contains settings and a root
+    TreeClassifier(TreeClassifier), 
+    TreeRegressor(TreeRegressor),
 }
 
 
-pub struct TreeRegressor {
-    root: dyn Node<f32>
-}
-
-impl Tree for TreeClassifier {
-    fn pick_random_split<T>(samples: ArrayBase<T, Ix1>, attribute_index: usize) -> Box<dyn Splitter> 
-    where T: Data<Elem = f32> {
+impl Tree {
+    fn pick_random_split(samples: ArrayBase<OwnedRepr<f32>, Ix1>, attribute_index: usize) -> Splitter {
         let (min, max) = samples.iter().fold((f32::MAX, f32::MIN), |(min, max), &x| {
             (min.min(x), max.max(x))
         });
         let pivot = rand::thread_rng().gen::<f32>() * (max - min) + min;
-        Box::new(NumericalSplitter::new(attribute_index, pivot))
+        Splitter::NumericalSplitter(attribute_index, pivot)
     }
 }
-

@@ -1,18 +1,18 @@
 use super::max_features::MaxFeatures;
-use super::tree::Tree;
-use crate::tree::splitter::Splitter;
-use crate::tree::tree::TreeSettings;
-use crate::{data::tree_dataset::TreeDataset, tree::node::Node};
+use super::utils::Tree;
+use crate::extra_tree::splitter::Splitter;
+use crate::extra_tree::utils::ExtraTreeSettings;
+use crate::{data::tree_dataset::TreeDataset, extra_tree::node::Node};
 use ndarray::{Array1, ArrayBase, Axis, Ix1, Ix2, OwnedRepr, Data};
 use rand::seq::SliceRandom;
 
-pub struct ExtraTreeClassifierBase {
-    settings: TreeSettings,
+pub struct ExtraTreeClassifier {
+    settings: ExtraTreeSettings,
     root: Node,
 }
 
-impl ExtraTreeClassifierBase {
-    pub fn new(settings: TreeSettings) -> Self {
+impl ExtraTreeClassifier {
+    pub fn new(settings: ExtraTreeSettings) -> Self {
         unimplemented!()
     }
 
@@ -96,7 +96,7 @@ impl ExtraTreeClassifierBase {
         self.root = Self::create_subtree(dataset, &self.settings);
     }
 
-    fn create_subtree(dataset: &TreeDataset<bool>, settings: &TreeSettings) -> Node {
+    fn create_subtree(dataset: &TreeDataset<bool>, settings: &ExtraTreeSettings) -> Node {
         let is_constant: Array1<bool> = dataset
             .X
             .axis_iter(Axis(1))
@@ -154,7 +154,7 @@ impl ExtraTreeClassifierBase {
     fn stop_expasion(
         dataset: &TreeDataset<bool>,
         is_constant: &ArrayBase<OwnedRepr<bool>, Ix1>,
-        settings: &TreeSettings,
+        settings: &ExtraTreeSettings,
     ) -> bool {
         // should be at least `min_samples_split` in the dataset.
         if dataset.y.len() < settings.min_samples_split {

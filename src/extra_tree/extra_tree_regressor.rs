@@ -1,19 +1,19 @@
 use crate::data::{tree_dataset::TreeDataset, self};
-use crate::tree::node::Node;
-use crate::tree::splitter::Splitter;
-use crate::tree::tree::TreeSettings;
+use crate::extra_tree::node::Node;
+use crate::extra_tree::splitter::Splitter;
+use crate::extra_tree::utils::ExtraTreeSettings;
 use ndarray::{ArrayBase, Axis, Ix1, Ix2, OwnedRepr};
 use rand::Rng;
 
-use super::tree::Tree;
+use super::utils::Tree;
 
 pub struct TreeRegressor {
-    settings: TreeSettings,
+    settings: ExtraTreeSettings,
     root: Node,
 }
 
 impl TreeRegressor {
-    pub fn new(settings: TreeSettings) -> Self {
+    pub fn new(settings: ExtraTreeSettings) -> Self {
         unimplemented!()
     }
 

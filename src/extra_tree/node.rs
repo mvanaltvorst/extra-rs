@@ -1,5 +1,5 @@
 use ndarray::{ArrayBase, Ix1, OwnedRepr};
-use crate::tree::splitter::Splitter;
+use crate::extra_tree::splitter::Splitter;
 
 // pub trait Node<T> 
 // where T: Copy {

@@ -2,9 +2,10 @@ use ndarray::{ArrayBase, Ix1, Ix2, OwnedRepr, Axis};
 use rand::Rng;
 use crate::tree::splitter::Splitter;
 use crate::tree::{tree_classifier::TreeClassifier, tree_regressor::TreeRegressor};
+use crate::tree::max_features::MaxFeatures;
 
 pub struct TreeSettings {
-    pub max_features: usize,
+    pub max_features: MaxFeatures,
     pub min_samples_split: usize,
 }
 

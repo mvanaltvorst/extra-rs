@@ -1,4 +1,4 @@
-use ndarray::{ArrayBase, Ix1, OwnedRepr};
+use ndarray::{ArrayBase, Ix1, Data};
 
 
 pub enum Splitter {
@@ -6,7 +6,8 @@ pub enum Splitter {
 }
 
 impl Splitter {
-    pub fn split(&self, x: &ArrayBase<OwnedRepr<f32>, Ix1>) -> bool {
+    pub fn split<T>(&self, x: &ArrayBase<T, Ix1>) -> bool
+    where T: Data<Elem = f32> {
         // False is left, true is right.
         match self {
             Splitter::NumericalSplitter(attribute_index, pivot) => x[*attribute_index] <= *pivot,

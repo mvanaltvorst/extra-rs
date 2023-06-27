@@ -1,23 +1,23 @@
+use super::max_features::MaxFeatures;
+use super::tree::Tree;
 use crate::tree::splitter::Splitter;
 use crate::tree::tree::TreeSettings;
 use crate::{data::tree_dataset::TreeDataset, tree::node::Node};
-use ndarray::{Array1, ArrayBase, Axis, Ix1, OwnedRepr};
-use super::max_features::MaxFeatures;
+use ndarray::{Array1, ArrayBase, Axis, Ix1, Ix2, OwnedRepr, Data};
+use rand::seq::SliceRandom;
 
-pub struct TreeClassifier {
+pub struct ExtraTreeClassifierBase {
     settings: TreeSettings,
     root: Node,
 }
 
-impl TreeClassifier {
+impl ExtraTreeClassifierBase {
     pub fn new(settings: TreeSettings) -> Self {
         unimplemented!()
     }
 
     fn split_sample(
         splitter: &Splitter,
-        // X: &ArrayBase<OwnedRepr<f32>, Ix2>,
-        // y: &ArrayBase<OwnedRepr<bool>, Ix1>,
         dataset: &TreeDataset<bool>,
     ) -> (TreeDataset<bool>, TreeDataset<bool>) {
         match *splitter {
@@ -91,26 +91,18 @@ impl TreeClassifier {
 
     pub fn build(
         &mut self,
-        // X: &ArrayBase<OwnedRepr<f32>, Ix2>,
-        // y: &ArrayBase<OwnedRepr<bool>, Ix1>,
         dataset: &TreeDataset<bool>,
     ) {
+        self.root = Self::create_subtree(dataset, &self.settings);
+    }
+
+    fn create_subtree(dataset: &TreeDataset<bool>, settings: &TreeSettings) -> Node {
         let is_constant: Array1<bool> = dataset
             .X
             .axis_iter(Axis(1))
             .map(|vs| vs.iter().all(|&v| v == vs[0]))
             .collect();
-    }
-
-    fn expand_node(
-        node: &mut Node,
-        // X: &ArrayBase<OwnedRepr<f32>, Ix2>,
-        // y: &ArrayBase<OwnedRepr<bool>, Ix1>,
-        dataset: &TreeDataset<bool>,
-        is_constant: &ArrayBase<OwnedRepr<bool>, Ix1>,
-        settings: &TreeSettings,
-    ) {
-        if TreeClassifier::stop_expasion(dataset, is_constant, settings) {
+        if Self::stop_expasion(dataset, &is_constant, settings) {
             // we only support two classes: 0 and 1.
             // our prediction is the percentage of 1's occuring.
             let prediction: f32 = dataset
@@ -119,7 +111,7 @@ impl TreeClassifier {
                 .map(|v| if *v { 1.0 } else { 0.0 })
                 .sum::<f32>()
                 / (dataset.y.len() as f32);
-            *node = Node::Leaf(prediction);
+            Node::Leaf(prediction)
         } else {
             // In case of automatic max features in a classification problem,
             // we take the length of the dataset as number of splits to consider.
@@ -131,22 +123,35 @@ impl TreeClassifier {
 
             // take k random features without replacement.
             let rand_indices = {
-                let mut indices: Vec<usize> = (0..is_constant.len()).filter(
-                    |&i| !is_constant[i],
-                ).collect();
+                let mut indices: Vec<usize> = (0..is_constant.len())
+                    .filter(|&i| !is_constant[i])
+                    .collect();
 
                 let mut rng = rand::thread_rng();
                 indices.shuffle(&mut rng);
-                indices.iter().take(k.min(indices.len())).cloned().collect()
+                indices.iter().take(k.min(indices.len())).cloned().collect::<Vec<usize>>()
             };
 
+            let X_feature_subset = dataset.X.select(Axis(1), &rand_indices);
 
+            let best_split = (0..rand_indices.len())
+                .map(|i| Tree::pick_random_split(X_feature_subset.index_axis(Axis(1), i).to_owned(), rand_indices[i]))
+                .map(|splitter| (Self::score(&splitter, &dataset), splitter))
+                .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap())
+                .unwrap()
+                .1;
+
+            let (left, right) = Self::split_sample(&best_split, &dataset);
+
+            Node::Branch(
+                best_split,
+                Box::new(Self::create_subtree(&left, settings)),
+                Box::new(Self::create_subtree(&right, settings)),
+            )
         }
     }
 
     fn stop_expasion(
-        // X: &ArrayBase<OwnedRepr<f32>, Ix2>,
-        // y: &ArrayBase<OwnedRepr<bool>, Ix1>,
         dataset: &TreeDataset<bool>,
         is_constant: &ArrayBase<OwnedRepr<bool>, Ix1>,
         settings: &TreeSettings,
@@ -167,5 +172,25 @@ impl TreeClassifier {
         }
 
         false
+    }
+
+    fn predict_proba(&self, X: &ArrayBase<OwnedRepr<f32>, Ix2>) -> Array1<f32> {
+        X.axis_iter(Axis(0))
+            .map(|x| Self::predict_proba_node_walk(&self.root, &x))
+            .collect()
+    }
+
+    fn predict_proba_node_walk<T>(node: &Node, x: &ArrayBase<T, Ix1>) -> f32
+    where T: Data<Elem = f32> {
+        match node {
+            Node::Leaf(p) => *p,
+            Node::Branch(splitter, left, right) => {
+                if splitter.split(x) {
+                    Self::predict_proba_node_walk(right, x)
+                } else {
+                    Self::predict_proba_node_walk(left, x)
+                }
+            }
+        }
     }
 }

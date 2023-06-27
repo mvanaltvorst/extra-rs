@@ -9,7 +9,7 @@ use super::tree::Tree;
 
 pub struct TreeRegressor {
     settings: TreeSettings,
-    root: Node<f32>,
+    root: Node,
 }
 
 impl TreeRegressor {

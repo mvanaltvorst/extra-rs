@@ -10,7 +10,7 @@ pub struct TreeSettings {
 }
 
 impl TreeSettings {
-    pub fn new(max_features: usize, min_samples_split: usize) -> Self {
+    pub fn new(max_features: MaxFeatures, min_samples_split: usize) -> Self {
         Self {
             max_features,
             min_samples_split,
@@ -26,7 +26,7 @@ pub enum Tree {
 
 
 impl Tree {
-    fn pick_random_split(samples: ArrayBase<OwnedRepr<f32>, Ix1>, attribute_index: usize) -> Splitter {
+    pub fn pick_random_split(samples: ArrayBase<OwnedRepr<f32>, Ix1>, attribute_index: usize) -> Splitter {
         let (min, max) = samples.iter().fold((f32::MAX, f32::MIN), |(min, max), &x| {
             (min.min(x), max.max(x))
         });

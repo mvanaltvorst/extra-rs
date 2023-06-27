@@ -13,5 +13,7 @@ fn extra_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     Ok(())
 }
 
-pub mod tree;
+
 pub mod data;
+pub mod extra_forest;
+pub mod extra_tree;

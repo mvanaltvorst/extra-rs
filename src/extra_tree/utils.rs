@@ -1,8 +1,6 @@
-use ndarray::{ArrayBase, Ix1, Ix2, OwnedRepr, Axis};
+use ndarray::{ArrayBase, Ix1, OwnedRepr};
 use rand::Rng;
 use crate::extra_tree::splitter::Splitter;
-use crate::extra_tree::{extra_tree_classifier::TreeClassifier, extra_tree_regressor::TreeRegressor};
-use crate::extra_tree::max_features::MaxFeatures;
 
 
 pub fn pick_random_split(samples: ArrayBase<OwnedRepr<f32>, Ix1>, attribute_index: usize) -> Splitter {

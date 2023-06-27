@@ -1,11 +1,9 @@
 use crate::data::{tree_dataset::TreeDataset, self};
 use crate::extra_tree::node::Node;
 use crate::extra_tree::splitter::Splitter;
-use crate::extra_tree::utils::ExtraTreeSettings;
+use crate::extra_tree::utils::pick_random_split;
+use crate::extra_tree::extra_tree_settings::ExtraTreeSettings;
 use ndarray::{ArrayBase, Axis, Ix1, Ix2, OwnedRepr};
-use rand::Rng;
-
-use super::utils::Tree;
 
 pub struct TreeRegressor {
     settings: ExtraTreeSettings,

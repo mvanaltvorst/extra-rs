@@ -1,7 +1,6 @@
-use super::max_features::MaxFeatures;
-use super::utils::Tree;
+use super::extra_tree_settings::{ExtraTreeSettings, MaxFeatures};
+use super::utils::pick_random_split;
 use crate::extra_tree::splitter::Splitter;
-use crate::extra_tree::utils::ExtraTreeSettings;
 use crate::{data::tree_dataset::TreeDataset, extra_tree::node::Node};
 use ndarray::{Array1, ArrayBase, Axis, Ix1, Ix2, OwnedRepr, Data};
 use rand::seq::SliceRandom;
@@ -117,7 +116,7 @@ impl ExtraTreeClassifier {
             // we take the length of the dataset as number of splits to consider.
             // TODO: reference
             let k = match settings.max_features {
-                MaxFeatures::Auto => dataset.y.len(),
+                MaxFeatures::Sqrt => dataset.y.len(),
                 MaxFeatures::Value(k) => k,
             };
 
@@ -128,6 +127,8 @@ impl ExtraTreeClassifier {
                     .collect();
 
                 let mut rng = rand::thread_rng();
+                // TODO: figure out how to do this without
+                // shuffling the entire list.
                 indices.shuffle(&mut rng);
                 indices.iter().take(k.min(indices.len())).cloned().collect::<Vec<usize>>()
             };
@@ -135,7 +136,7 @@ impl ExtraTreeClassifier {
             let X_feature_subset = dataset.X.select(Axis(1), &rand_indices);
 
             let best_split = (0..rand_indices.len())
-                .map(|i| Tree::pick_random_split(X_feature_subset.index_axis(Axis(1), i).to_owned(), rand_indices[i]))
+                .map(|i| pick_random_split(X_feature_subset.index_axis(Axis(1), i).to_owned(), rand_indices[i]))
                 .map(|splitter| (Self::score(&splitter, &dataset), splitter))
                 .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap())
                 .unwrap()

@@ -1,4 +1,4 @@
-use ndarray::{ArrayBase, Ix1, Ix2, Data, OwnedRepr};
+use ndarray::{ArrayBase, Ix1, Ix2, OwnedRepr};
 
 // X is f32.
 // y is f32 or bool.

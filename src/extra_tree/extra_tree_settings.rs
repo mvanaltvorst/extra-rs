@@ -11,10 +11,10 @@ pub struct ExtraTreeSettings {
 }
 
 impl ExtraTreeSettings {
-    pub fn new(max_features: MaxFeatures, min_samples_split: usize, bootstrap: bool) -> Self {
+    pub fn new(max_features: MaxFeatures, min_samples_split: usize, _bootstrap: bool) -> Self {
         Self {
-            max_features: max_features,
-            min_samples_split: min_samples_split,
+            max_features,
+            min_samples_split,
         }
     }
 }

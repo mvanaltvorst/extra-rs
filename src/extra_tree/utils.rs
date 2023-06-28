@@ -104,7 +104,7 @@ pub fn create_subtree<T: Copy + PartialEq + Into<f32>>(score: fn(&Splitter, &Tre
         // we take the length of the dataset as number of splits to consider.
         // TODO: reference
         let k = match settings.max_features {
-            MaxFeatures::Sqrt => dataset.y.len(),
+            MaxFeatures::Sqrt => (dataset.y.len() as f32).sqrt().ceil() as usize,
             MaxFeatures::Value(k) => k,
         };
 
@@ -120,17 +120,22 @@ pub fn create_subtree<T: Copy + PartialEq + Into<f32>>(score: fn(&Splitter, &Tre
             indices.shuffle(&mut rng);
             indices.iter().take(k.min(indices.len())).cloned().collect::<Vec<usize>>()
         };
+        println!("{:?}", rand_indices);
 
         let X_feature_subset = dataset.X.select(Axis(1), &rand_indices);
 
         let best_split = (0..rand_indices.len())
             .map(|i| pick_random_split(X_feature_subset.index_axis(Axis(1), i).to_owned(), rand_indices[i]))
-            .map(|splitter| (score(&splitter, &dataset), splitter))
+            .map(|splitter| (score(&splitter, dataset), splitter))
+            .map(|a| {
+                println!("{:?}", a);
+                a
+            })
             .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap())
             .unwrap()
             .1;
 
-        let (left, right) = split_sample(&best_split, &dataset);
+        let (left, right) = split_sample(&best_split, dataset);
 
         Node::Branch(
             best_split,

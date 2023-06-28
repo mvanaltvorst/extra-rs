@@ -11,7 +11,7 @@ impl Splitter {
     where T: Data<Elem = f32> {
         // False is left, true is right.
         match self {
-            Splitter::NumericalSplitter(attribute_index, pivot) => x[*attribute_index] <= *pivot,
+            Splitter::NumericalSplitter(attribute_index, pivot) => x[*attribute_index] > *pivot,
         }
     }
 }

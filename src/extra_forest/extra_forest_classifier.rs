@@ -18,8 +18,8 @@ impl ExtraForestClassifier {
         forest_settings: ExtraForestSettings,
     ) -> ExtraForestClassifier {
         ExtraForestClassifier {
-            tree_settings: tree_settings,
-            forest_settings: forest_settings,
+            tree_settings,
+            forest_settings,
             trees: Vec::new(),
         }
     }
@@ -33,7 +33,7 @@ impl ExtraForestClassifier {
                     self.trees.push(self.fit_underlying_tree(dataset));
                 }
             },
-            NJobs::Value(k) => {
+            NJobs::Value(_k) => {
                 unimplemented!()
             },
             NJobs::NoLimit => {
@@ -57,7 +57,7 @@ impl ExtraForestClassifier {
     }
 
     pub fn predict_proba(&self, X: &ArrayBase<OwnedRepr<f32>, Ix2>) -> Array1<f32> {
-        self.trees.iter().map(|tree| tree.predict_proba(&X)).fold(
+        self.trees.iter().map(|tree| tree.predict_proba(X)).fold(
             Array1::zeros(X.len()),
             |acc, elem| acc + elem
         )

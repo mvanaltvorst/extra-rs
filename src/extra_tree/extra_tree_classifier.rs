@@ -1,9 +1,10 @@
-use super::extra_tree_settings::{ExtraTreeSettings, MaxFeatures};
+// TODO: arbitrary number of classes.
+
+use super::extra_tree_settings::ExtraTreeSettings;
 use super::utils::{split_sample, create_subtree};
 use crate::extra_tree::splitter::Splitter;
 use crate::{data::tree_dataset::TreeDataset, extra_tree::node::Node};
 use ndarray::{Array1, ArrayBase, Axis, Ix1, Ix2, OwnedRepr, Data};
-use rand::seq::SliceRandom;
 
 #[derive(Debug)]
 pub struct ExtraTreeClassifier {

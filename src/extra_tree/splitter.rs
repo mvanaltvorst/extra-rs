@@ -1,6 +1,7 @@
 use ndarray::{ArrayBase, Ix1, Data};
 
 
+#[derive(Debug)]
 pub enum Splitter {
     NumericalSplitter(usize, f32), // attribute_index, pivot
 }

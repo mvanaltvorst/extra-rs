@@ -1,9 +1,9 @@
-use crate::data::{tree_dataset::TreeDataset, self};
+use crate::data::tree_dataset::TreeDataset;
 use crate::extra_tree::node::Node;
 use crate::extra_tree::splitter::Splitter;
-use crate::extra_tree::utils::pick_random_split;
+use crate::extra_tree::utils::{split_sample, create_subtree};
 use crate::extra_tree::extra_tree_settings::ExtraTreeSettings;
-use ndarray::{ArrayBase, Axis, Ix1, Ix2, OwnedRepr};
+use ndarray::{ArrayBase, Axis, Ix2, Array1, Data};
 
 pub struct TreeRegressor {
     settings: ExtraTreeSettings,
@@ -12,43 +12,9 @@ pub struct TreeRegressor {
 
 impl TreeRegressor {
     pub fn new(settings: ExtraTreeSettings) -> Self {
-        unimplemented!()
-    }
-
-    fn split_sample(
-        splitter: &Splitter,
-        dataset: &TreeDataset<f32>,
-    ) -> (
-        TreeDataset<f32>,
-        TreeDataset<f32>,
-    ) {
-        match *splitter {
-            Splitter::NumericalSplitter(attribute_index, pivot) => {
-                let samples = dataset.X.column(attribute_index);
-
-                let (left_indices, right_indices) = samples.iter().enumerate().fold(
-                    (Vec::new(), Vec::new()),
-                    |(mut left_indices, mut right_indices), (i, &x)| {
-                        if x > pivot {
-                            right_indices.push(i);
-                        } else {
-                            left_indices.push(i);
-                        }
-                        (left_indices, right_indices)
-                    },
-                );
-
-                let left = TreeDataset { 
-                    X: dataset.X.select(Axis(0), &left_indices),
-                    y: dataset.y.select(Axis(0), &left_indices),
-                };
-                let right = TreeDataset { 
-                    X: dataset.X.select(Axis(0), &right_indices),
-                    y: dataset.y.select(Axis(0), &right_indices),
-                };
-
-                (left, right)
-            }
+        Self {
+            settings: settings,
+            root: Node::Unexplored,
         }
     }
 
@@ -57,7 +23,7 @@ impl TreeRegressor {
         dataset: &TreeDataset<f32>
     ) -> f32 {
         // Decrease variance as much as possible.
-        let (TreeDataset{y: ly, ..}, TreeDataset{y: ry, ..}) = Self::split_sample(splitter, &dataset);
+        let (TreeDataset{y: ly, ..}, TreeDataset{y: ry, ..}) = split_sample(splitter, &dataset);
         let y_mean = dataset.y.mean().unwrap();
         let ly_mean = ly.mean().unwrap();
         let ry_mean = ry.mean().unwrap();
@@ -72,5 +38,19 @@ impl TreeRegressor {
         let score = (y_var - l_probability * ly_var - r_probability * ry_var) / y_var;
 
         score
+    }
+
+    pub fn build(
+        &mut self,
+        dataset: &TreeDataset<f32>
+    ) {
+        self.root = create_subtree(Self::score, dataset, &self.settings);
+    }
+
+    pub fn predict<T>(&self, X: &ArrayBase<T, Ix2>) -> Array1<f32> 
+    where T: Data<Elem = f32> {
+        X.axis_iter(Axis(0))
+            .map(|x| self.root.predict(&x))
+            .collect()
     }
 }

@@ -15,7 +15,7 @@ pub struct ExtraTreeClassifier {
 impl ExtraTreeClassifier {
     pub fn new(settings: ExtraTreeSettings) -> Self {
         Self {
-            settings: settings,
+            settings,
             root: Node::Unexplored
         }
     }
@@ -42,7 +42,7 @@ impl ExtraTreeClassifier {
     fn score(splitter: &Splitter, dataset: &TreeDataset<bool>) -> f32 {
         // TODO: ensure this is correct. Pretty sure it's not.
         let (TreeDataset { y: ly, .. }, TreeDataset { y: ry, .. }) =
-            split_sample(&splitter, &dataset);
+            split_sample(splitter, dataset);
 
         let l_entropy = Self::labeling_entropy(&ly);
         let r_entropy = Self::labeling_entropy(&ry);

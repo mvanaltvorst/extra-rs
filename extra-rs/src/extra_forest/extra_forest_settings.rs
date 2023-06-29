@@ -1,18 +1,18 @@
 use std::marker::Copy;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum MaxDepth {
     Infinite,
     Value(usize)
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum NJobs {
     NoLimit,
     Value(usize)
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct ExtraForestSettings {
     pub n_estimators: usize,
     pub max_depth: MaxDepth,

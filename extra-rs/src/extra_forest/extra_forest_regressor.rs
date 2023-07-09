@@ -11,7 +11,7 @@ use super::extra_forest_settings::NJobs;
 pub struct ExtraForestRegressor {
     tree_settings: ExtraTreeSettings,
     forest_settings: ExtraForestSettings,
-    trees: Vec<ExtraTreeRegressor>,
+    pub trees: Vec<ExtraTreeRegressor>,
 }
 
 impl ExtraForestRegressor {

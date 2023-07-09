@@ -8,7 +8,7 @@ use ndarray::{Array1, ArrayBase, Axis, Data, Ix2};
 #[derive(Debug)]
 pub struct ExtraTreeRegressor {
     settings: ExtraTreeSettings,
-    root: Node,
+    pub root: Node,
 }
 
 impl ExtraTreeRegressor {

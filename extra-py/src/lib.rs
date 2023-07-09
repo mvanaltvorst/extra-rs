@@ -1,11 +1,13 @@
 use pyo3::prelude::*;
-use ndarray::prelude::*;
+use crate::extra_forest::extra_forest_regressor::PyExtraForestRegressor;
 // use crate::extra_tree::extra_tree_classifier::ExtraTreeClassifier;
 // use crate::extra_tree::extra_tree_regressor::ExtraTreeRegressor;
 // use crate::extra_tree::extra_tree_settings::ExtraTreeSettings;
 // use crate::extra_forest::extra_forest_regressor::ExtraForestRegressor;
 // use crate::extra_forest::extra_forest_settings::ExtraForestSettings;
 // use crate::data::tree_dataset::TreeDataset;
+
+pub mod extra_forest;
 
 /// Formats the sum of two numbers as string.
 #[pyfunction]
@@ -86,8 +88,9 @@ fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn extra_rs(_py: Python, m: &PyModule) -> PyResult<()> {
+fn extra_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
+    m.add_class::<PyExtraForestRegressor>()?;
     // m.add_function(wrap_pyfunction!(tree_test_classification, m)?)?;
     // m.add_function(wrap_pyfunction!(tree_test_regression, m)?)?;
     // m.add_function(wrap_pyfunction!(forest_test_regression, m)?)?;

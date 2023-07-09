@@ -1,12 +1,12 @@
 # Extremely randomized forests
 
-This package written in Rust implements extremely randomized forests by Geurts [1]. There are Python bindings available as well. How to use this library can be found in [the examples](https://github.com/mvanaltvorst/extra-rs/tree/main/examples).
+This package written in Rust implements extremely randomized forests by Geurts et al. [1]. There are Python bindings available as well. How to use this library can be found in [the examples](https://github.com/mvanaltvorst/extra-rs/tree/main/examples).
 
 The main goal of this project is to learn more about random forests and provide a fast multi-threaded implementation of extremely randomized forests. I hope to make use of SIMD instructions in the future to further improve throughput and decrease latency.
 
 ## WIP
-- [ ] Implement extremely randomized tree and forest regressors in Rust
-- [ ] Python bindings using `maturin` and `pyo3`
+- [x] Implement extremely randomized tree and forest regressors in Rust
+- [x] Python bindings using `maturin` and `pyo3`
 - [ ] Benchmarks
 - [ ] Documentation
 - [ ] SIMD

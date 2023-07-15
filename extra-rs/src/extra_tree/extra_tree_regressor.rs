@@ -24,8 +24,16 @@ impl ExtraTreeRegressor {
         let (TreeDataset { y: ly, .. }, TreeDataset { y: ry, .. }) =
             split_sample(splitter, dataset);
         let y_mean = dataset.y.mean().unwrap();
-        let ly_mean = ly.mean().unwrap();
-        let ry_mean = ry.mean().unwrap();
+        let ly_mean = ly.mean();
+        if ly_mean.is_none() {
+            return f32::NEG_INFINITY;
+        }
+        let ly_mean = ly_mean.unwrap();
+        let ry_mean = ry.mean();
+        if ry_mean.is_none() {
+            return f32::NEG_INFINITY;
+        }
+        let ry_mean = ry_mean.unwrap();
 
         let y_var =
             dataset.y.iter().map(|&y| (y - y_mean).powi(2)).sum::<f32>() / dataset.y.len() as f32;
@@ -39,7 +47,7 @@ impl ExtraTreeRegressor {
     }
 
     pub fn build(&mut self, dataset: &TreeDataset<f32>) {
-        self.root = create_subtree(Self::score, dataset, &self.settings);
+        self.root = create_subtree(Self::score, dataset, &self.settings, 0);
     }
 
     pub fn predict<T>(&self, X: &ArrayBase<T, Ix2>) -> Array1<f32>

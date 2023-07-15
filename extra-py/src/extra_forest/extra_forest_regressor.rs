@@ -16,7 +16,7 @@ pub struct PyExtraForestRegressor {
 #[pymethods]
 impl PyExtraForestRegressor {
     #[new]
-    #[pyo3(signature = (n_estimators=100, max_depth=-1, n_jobs=1, bootstrap=false, max_features="sqrt", min_samples_split=2))]
+    #[pyo3(signature = (n_estimators=100, max_depth=-1, n_jobs=-1, bootstrap=false, max_features="sqrt", min_samples_split=2))]
     fn new(
         n_estimators: usize,
         max_depth: i32,
@@ -28,10 +28,10 @@ impl PyExtraForestRegressor {
         let forest_settings = {
             let mut forest_settings = ExtraForestSettings::default();
             forest_settings.n_estimators = n_estimators;
-            if n_jobs <= 0 {
-                return Err(PyValueError::new_err("n_jobs must be greater than 0"));
-            } else if n_jobs == 1 {
-                // we parse 1 as no limit
+            if n_jobs <= -2 || n_jobs == 0 {
+                return Err(PyValueError::new_err("`n_jobs` must be greater than 0 or must be -1."));
+            } else if n_jobs == -1 {
+                // we parse -1 as no limit
                 forest_settings.n_jobs = NJobs::NoLimit;
             } else {
                 forest_settings.n_jobs = NJobs::Value(n_jobs as usize);

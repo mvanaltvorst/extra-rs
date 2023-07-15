@@ -2,7 +2,7 @@ use ndarray::{ArrayBase, Ix1, Ix2, OwnedRepr, Array1, Axis, Data};
 use rand::Rng;
 use rand::seq::SliceRandom;
 use crate::extra_tree::splitter::Splitter;
-use crate::extra_tree::extra_tree_settings::ExtraTreeSettings;
+use crate::extra_tree::extra_tree_settings::{ExtraTreeSettings, MaxDepth};
 use crate::data::tree_dataset::TreeDataset;
 
 use super::extra_tree_settings::MaxFeatures;
@@ -31,7 +31,15 @@ pub fn stop_expansion<T: Copy + PartialEq>(
     dataset: &TreeDataset<T>,
     is_constant: &ArrayBase<OwnedRepr<bool>, Ix1>,
     settings: &ExtraTreeSettings,
+    current_depth: usize,
 ) -> bool {
+    // cannot exceed `max_depth`
+    if let MaxDepth::Value(k) = settings.max_depth {
+        if current_depth >= k {
+            return true;
+        }
+    }
+
     // should be at least `min_samples_split` in the dataset.
     if dataset.y.len() < settings.min_samples_split {
         return true;
@@ -87,11 +95,9 @@ pub fn split_sample<T: Copy>(
     }
 }
 
-pub fn create_subtree<T: Copy + PartialEq + Into<f32>>(score: fn(&Splitter, &TreeDataset<T>) -> f32, dataset: &TreeDataset<T>, settings: &ExtraTreeSettings) -> Node {
+pub fn create_subtree<T: Copy + PartialEq + Into<f32>>(score: fn(&Splitter, &TreeDataset<T>) -> f32, dataset: &TreeDataset<T>, settings: &ExtraTreeSettings, current_depth: usize) -> Node {
     let is_constant = is_constant(&dataset.X);
-    if stop_expansion(dataset, &is_constant, settings) {
-        // we only support two classes: 0 and 1.
-        // our prediction is the percentage of 1's occuring.
+    if stop_expansion(dataset, &is_constant, settings, current_depth) {
         let prediction: f32 = dataset
             .y
             .iter()
@@ -126,10 +132,6 @@ pub fn create_subtree<T: Copy + PartialEq + Into<f32>>(score: fn(&Splitter, &Tre
         let best_split = (0..rand_indices.len())
             .map(|i| pick_random_split(X_feature_subset.index_axis(Axis(1), i).to_owned(), rand_indices[i]))
             .map(|splitter| (score(&splitter, dataset), splitter))
-            // .map(|a| {
-            //     println!("{:?}", a);
-            //     a
-            // })
             .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap())
             .unwrap()
             .1;
@@ -138,8 +140,8 @@ pub fn create_subtree<T: Copy + PartialEq + Into<f32>>(score: fn(&Splitter, &Tre
 
         Node::Branch(
             best_split,
-            Box::new(create_subtree(score, &left, settings)),
-            Box::new(create_subtree(score, &right, settings)),
+            Box::new(create_subtree(score, &left, settings, current_depth + 1)),
+            Box::new(create_subtree(score, &right, settings, current_depth + 1)),
         )
     }
 }

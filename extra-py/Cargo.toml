@@ -13,4 +13,5 @@ ndarray = "0.15.6"
 pyo3 = "0.19.0"
 extra-rs = { path = "../extra-rs" }
 numpy = "0.19.0"
+rayon = "1.7.0"
 

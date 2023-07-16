@@ -2,6 +2,7 @@ use extra_rs::extra_forest::extra_forest_regressor::ExtraForestRegressor;
 use extra_rs::extra_forest::extra_forest_settings::{ExtraForestSettings, NJobs};
 use extra_rs::extra_tree::extra_tree_settings::{ExtraTreeSettings, MaxDepth, MaxFeatures};
 use extra_rs::data::tree_dataset::TreeDataset;
+use super::extra_forest_regressor_inferencer::PyExtraForestRegressorInferencer;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use numpy::{IntoPyArray, PyReadonlyArray1, PyReadonlyArray2, PyArray1};
@@ -99,5 +100,9 @@ impl PyExtraForestRegressor {
 
     fn get_debug_tree_descriptions(&self) -> Vec<String> {
         self.inner.trees.iter().map(|tree| format!("{:?}", tree.root)).collect()
+    }
+
+    fn get_inferencer(&self) -> PyResult<PyExtraForestRegressorInferencer> {
+        PyExtraForestRegressorInferencer::new(&self.inner)
     }
 }

@@ -9,8 +9,8 @@ use super::extra_forest_settings::NJobs;
 
 #[derive(Debug)]
 pub struct ExtraForestRegressor {
-    tree_settings: ExtraTreeSettings,
-    forest_settings: ExtraForestSettings,
+    pub tree_settings: ExtraTreeSettings,
+    pub forest_settings: ExtraForestSettings,
     pub trees: Vec<ExtraTreeRegressor>,
 }
 
@@ -28,14 +28,14 @@ impl ExtraForestRegressor {
 
     pub fn fit(&mut self, dataset: &TreeDataset<f32>) {
         match self.forest_settings.n_jobs {
-            NJobs::Value(0) => unreachable!("Cannot process with zero jobs."),
+            NJobs::Value(0) => panic!("Cannot process with zero jobs."),
             NJobs::Value(1) => {
                 self.trees = Vec::with_capacity(self.forest_settings.n_estimators);
                 for _ in 0..self.forest_settings.n_estimators {
                     self.trees.push(self.fit_underlying_tree(dataset));
                 }
             },
-            NJobs::Value(k) => {
+            NJobs::Value(_k) => {
                 // we use rayon with k cores
                 unimplemented!("Use the `RAYON_NUM_THREADS` environment variable to set the number of threads.");
             },
@@ -64,9 +64,24 @@ impl ExtraForestRegressor {
 
     pub fn predict(&self, X: &ArrayBase<OwnedRepr<f32>, Ix2>) -> Array1<f32> {
         let n_obs = X.shape()[0];
-        self.trees.par_iter().map(|tree| tree.predict(X)).reduce(
-            || Array1::zeros(n_obs),
-            |acc, elem| acc + elem
-        ) / (self.forest_settings.n_estimators as f32)
+        match self.forest_settings.n_jobs {
+            NJobs::Value(0) => panic!("Cannot process with zero jobs."),
+            NJobs::Value(1) => {
+                self.trees.iter().map(|tree| tree.predict(X)).reduce(
+                    |acc, elem| acc + elem
+                ).unwrap() / (self.forest_settings.n_estimators as f32)
+            },
+            NJobs::Value(_k) => {
+                // we use rayon with k cores
+                unimplemented!("Use the `RAYON_NUM_THREADS` environment variable to set the number of threads.");
+            },
+            NJobs::NoLimit => {
+                // we use rayon
+                self.trees.par_iter().map(|tree| tree.predict(X)).reduce(
+                    || Array1::zeros(n_obs),
+                    |acc, elem| acc + elem
+                ) / (self.forest_settings.n_estimators as f32)
+            },
+        }
     }
 }

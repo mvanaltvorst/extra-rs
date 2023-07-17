@@ -13,3 +13,8 @@ We use 80% of the sample for training and 20% for testing. Measurements are made
 --- | --- | --- | --- | --- | ---
 | extra-rs 0.1.1 | n_estimators=80, min_samples_split=4, max_depth=10 | 100,000 | 42.3 s | 13.4 ms | 22.51 |
 | LGBM 3.3.2 | n_estimators=80, min_samples_split=4, max_depth=10 | 100,000 | 1.2 s | 18.3 ms | 32.26 |
+
+## Extra forest inferencer
+The inferencer is built for trees with a max depth of 8. It is built upon bitmasks and lookup tables. At the moment of writing, it is ~30% slower than the default object-based inferencer. 
+
+I suspect the slowdown is caused due to cache misses. Oblivious trees are trees where each split only depends on the depth and not on the splits made so far. The lookup table such a tree requires is many times smaller. This is yet to be implemented.

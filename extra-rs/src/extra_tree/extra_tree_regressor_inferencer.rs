@@ -20,7 +20,7 @@ fn get_masked_leaf_index(leaf_index: usize, depth: usize) -> usize {
     // mask at depth = 0 is 0b10000000
     // mask at depth = 1 is 0b11000000
     // mask at depth = 2 is 0b11100000
-    let mask = (0xff << (7 - depth)) & 0xff; 
+    let mask = (0xff << (8 - depth)) & 0xff; 
 
     // we add a trailing 1 bit to encode the current depth into the state
     (leaf_index & mask) + (1 << (7 - depth))
@@ -47,7 +47,7 @@ impl ExtraTreeRegressorInferencer {
             while depth < 8 {
                 let acc_leaf_index = get_masked_leaf_index(leaf_index, depth);
 
-                println!("Leaf index: {:08b}, acc_leaf_index at depth={}: {:08b}", leaf_index, depth, acc_leaf_index);
+                // println!("Leaf index: {:08b}, acc_leaf_index at depth={}: {:08b}", leaf_index, depth, acc_leaf_index);
 
                 match current_node {
                     Node::Leaf(leaf_value) => {
@@ -55,6 +55,7 @@ impl ExtraTreeRegressorInferencer {
                         // We store the leaf value and calculate feature indices and thresholds
                         // in the next loop.
                         leaf_values[leaf_index] = *leaf_value;
+                        // println!("Leaf value: {}", leaf_value);
                         break
                     },
                     Node::Unexplored => return Err("Encountered unexplored node.".to_string()),
@@ -65,7 +66,8 @@ impl ExtraTreeRegressorInferencer {
                         let attribute_index = *attribute_index as u8;
                         attribute_indices[acc_leaf_index] = attribute_index;
                         pivots[acc_leaf_index] = *pivot;
-                        if leaf_index & (1 << depth) > 0 {
+                        // println!("Attribute index: {}, pivot: {}", attribute_index, pivot);
+                        if leaf_index & (1 << (7 - depth)) > 0 {
                             // right child
                             current_node = right;
                         } else {
@@ -81,15 +83,17 @@ impl ExtraTreeRegressorInferencer {
                 // We have to fill the remaining depth with the last attribute index and pivot
                 let acc_leaf_index = get_masked_leaf_index(leaf_index, depth);
 
-                println!("OOB: Leaf index: {:08b}, acc_leaf_index at depth={}: {:08b}", leaf_index, depth, acc_leaf_index);
+                // println!("Leaf index: {:08b}, acc_leaf_index at depth={}: {:08b} (OOB)", leaf_index, depth, acc_leaf_index);
 
                 attribute_indices[acc_leaf_index] = 0;
                 if leaf_index & (1 << depth) > 0 {
                     // Right child
                     // We set the pivot to -inf to ensure we always go to the right child   
+                    // println!("Setting pivot to -inf");
                     pivots[acc_leaf_index] = f32::NEG_INFINITY;
                 } else {
                     // Left child
+                    // println!("Setting pivot to +inf");
                     pivots[acc_leaf_index] = f32::INFINITY;
                 }
                 depth += 1;
@@ -107,10 +111,11 @@ impl ExtraTreeRegressorInferencer {
         for depth in 0..8 {
             let idx = acc_leaf_index + (1 << (7 - depth));
             let attribute_index = self.attribute_indices[idx];
+            // println!("Acc leaf index: {:08b}, depth: {}, attribute index: {}", idx, depth, attribute_index);
             let pivot = self.pivots[idx];
             if x[attribute_index as usize] > pivot {
                 // Right child
-                acc_leaf_index += 1 << depth;
+                acc_leaf_index += (1 << (7 - depth));
             }
         }
         self.leaf_values[acc_leaf_index]

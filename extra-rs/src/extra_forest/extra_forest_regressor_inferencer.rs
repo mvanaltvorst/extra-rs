@@ -1,6 +1,6 @@
 use super::extra_forest_regressor::ExtraForestRegressor;
 use super::extra_forest_settings::NJobs;
-use crate::extra_tree::extra_tree_regressor_inferencer::ExtraTreeRegressorInferencer;
+use crate::extra_tree::extra_tree_regressor_inferencer::{ExtraTreeRegressorInferencer, fast_sigmoid, inverse_fast_sigmoid};
 
 pub struct ExtraForestRegressorInferencer {
     // We can turn an ExtraForestRegressor into an ExtraForestRegressorInferencer
@@ -20,6 +20,7 @@ impl ExtraForestRegressorInferencer {
 
     pub fn predict(&self, x: &[f32]) -> f32 {
         // Multithreading does not make sense here given the overhead of spawning threads.
-        self.trees.iter().map(|tree| tree.predict(x)).sum::<f32>() / (self.trees.len() as f32)
+        let quantized = x.iter().map(|x| fast_sigmoid(*x)).collect::<Vec<u8>>();
+        self.trees.iter().map(|tree| inverse_fast_sigmoid(tree.predict_quantized(&quantized))).sum::<f32>() / (self.trees.len() as f32)
     }
 }

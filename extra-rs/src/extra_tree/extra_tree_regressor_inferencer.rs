@@ -12,8 +12,8 @@ pub struct ExtraTreeRegressorInferencer {
     // Similarly, we assume a maximum number of 255 features to ensure our feature_index
     // fits into a u8.
     attribute_indices: [u8; 1 << 8],
-    pivots: [f32; 1 << 8],
-    leaf_values: [f32; 1 << 8],
+    pivots: [u8; 1 << 8],
+    leaf_values: [u8; 1 << 8],
 }
 
 fn get_masked_leaf_index(leaf_index: usize, depth: usize) -> usize {
@@ -26,6 +26,27 @@ fn get_masked_leaf_index(leaf_index: usize, depth: usize) -> usize {
     (leaf_index & mask) + (1 << (7 - depth))
 }
 
+pub fn fast_sigmoid(x: f32) -> u8 {
+    // must be monotonic
+    // -inf -> 0
+    // 0 -> 128
+    // inf -> 255
+
+    // We use the fast sigmoid 256 * x / (1 + abs(x))
+    ((x / (1.0 + x.abs())) * 256.0) as u8
+}
+
+pub fn inverse_fast_sigmoid(x: u8) -> f32 {
+    // must be monotonic
+    // 0 -> -inf
+    // 128 -> 0
+    // 255 -> inf
+
+    // We use the fast sigmoid x / (1 - x)
+    x as f32 / (1.0 - x as f32 / 256.0)
+}
+
+
 impl ExtraTreeRegressorInferencer {
     pub fn new(extra_tree: &ExtraTreeRegressor) -> Result<ExtraTreeRegressorInferencer, String> {
         match extra_tree.settings.max_depth {
@@ -36,8 +57,8 @@ impl ExtraTreeRegressorInferencer {
         }
 
         let mut attribute_indices = [0u8; 1 << 8];
-        let mut pivots = [0f32; 1 << 8];
-        let mut leaf_values = [0f32; 1 << 8];
+        let mut pivots = [0u8; 1 << 8];
+        let mut leaf_values = [0u8; 1 << 8];
 
         // we iterate over all leaf indices and calculate the feature index, threshold and leaf value
         for leaf_index in 0..256 {
@@ -54,7 +75,7 @@ impl ExtraTreeRegressorInferencer {
                         // We found the correct leaf node.
                         // We store the leaf value and calculate feature indices and thresholds
                         // in the next loop.
-                        leaf_values[leaf_index] = *leaf_value;
+                        leaf_values[leaf_index] = fast_sigmoid(*leaf_value);
                         // println!("Leaf value: {}", leaf_value);
                         break
                     },
@@ -65,7 +86,7 @@ impl ExtraTreeRegressorInferencer {
                         }
                         let attribute_index = *attribute_index as u8;
                         attribute_indices[acc_leaf_index] = attribute_index;
-                        pivots[acc_leaf_index] = *pivot;
+                        pivots[acc_leaf_index] = fast_sigmoid(*pivot);
                         // println!("Attribute index: {}, pivot: {}", attribute_index, pivot);
                         if leaf_index & (1 << (7 - depth)) > 0 {
                             // right child
@@ -90,11 +111,11 @@ impl ExtraTreeRegressorInferencer {
                     // Right child
                     // We set the pivot to -inf to ensure we always go to the right child   
                     // println!("Setting pivot to -inf");
-                    pivots[acc_leaf_index] = f32::NEG_INFINITY;
+                    pivots[acc_leaf_index] = 0;
                 } else {
                     // Left child
                     // println!("Setting pivot to +inf");
-                    pivots[acc_leaf_index] = f32::INFINITY;
+                    pivots[acc_leaf_index] = 0xff;
                 }
                 depth += 1;
             }
@@ -106,7 +127,7 @@ impl ExtraTreeRegressorInferencer {
         })
     }
 
-    pub fn predict(&self, x: &[f32]) -> f32 {
+    pub fn predict_quantized(&self, x: &[u8]) -> u8 {
         let mut acc_leaf_index: usize = 0;
         for depth in 0..8 {
             let idx = acc_leaf_index + (1 << (7 - depth));
@@ -115,7 +136,7 @@ impl ExtraTreeRegressorInferencer {
             let pivot = self.pivots[idx];
             if x[attribute_index as usize] > pivot {
                 // Right child
-                acc_leaf_index += (1 << (7 - depth));
+                acc_leaf_index += 1 << (7 - depth);
             }
         }
         self.leaf_values[acc_leaf_index]

@@ -18,3 +18,5 @@ We use 80% of the sample for training and 20% for testing. Measurements are made
 The inferencer is built for trees with a max depth of 8. It is built upon bitmasks and lookup tables. At the moment of writing, it is ~30% slower than the default object-based inferencer. 
 
 I suspect the slowdown is caused due to cache misses. Oblivious trees are trees where each split only depends on the depth and not on the splits made so far. The lookup table such a tree requires is many times smaller. This is yet to be implemented.
+
+Feature quantization using the fast sigmoid function ($\frac {x} {|x| + 1}$) seems to have a negative impact on performance.

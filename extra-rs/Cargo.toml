@@ -12,3 +12,6 @@ name = "extra_rs"
 ndarray = "0.15.6"
 rand = "0.8.5"
 rayon = "1.7.0"
+
+[dev-dependencies]
+polars = { version = "0.31.1", features = ["parquet", "ndarray"] }

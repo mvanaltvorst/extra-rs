@@ -33,7 +33,7 @@ pub fn fast_sigmoid(x: f32) -> u8 {
     // inf -> 255
 
     // We use the fast sigmoid 256 * x / (1 + abs(x))
-    ((x / (1.0 + x.abs())) * 256.0) as u8
+    ((x / (1.0 + x.abs())) * 255.0) as u8
 }
 
 pub fn inverse_fast_sigmoid(x: u8) -> f32 {
@@ -43,7 +43,7 @@ pub fn inverse_fast_sigmoid(x: u8) -> f32 {
     // 255 -> inf
 
     // We use the fast sigmoid x / (1 - x)
-    x as f32 / (1.0 - x as f32 / 256.0)
+    x as f32 / (1.0 - x as f32 / 255.0)
 }
 
 
